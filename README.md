@@ -1,73 +1,73 @@
 # T-Shop
-## Описание проекта:
-T-Shop - это интернет-магазин одежды из параллельной вселенной. Он имеет 5 миллионов клиентов, число которых постоянно растет. Представим, что ежедневная конверсия в покупку составляет 1% в будние дни и 5% в выходные. В рамках покупки может быть приобретено несколько товаров в разном количестве.
+## Project Description:
+T-Shop is an online clothing shop from a parallel universe. It has 5 million customers, the number of which is constantly growing. Let's imagine that the daily conversion to purchase is 1% on weekdays and 5% on weekends. Several products in different quantities can be purchased as part of a purchase.
 
-## Цель проекта:
-Построить упрощенный ETL-процесс полного цикла (от формирования исходных данных до визуализации).
+## Project Objective:
+Build a simplified full-cycle ETL process (from raw data generation to visualisation).
 
-## Требования:
-Нужно сгенерировать 3 таблицы (клиент, товар, продажи) и заливать их в PostgreSQL (RAW-слой). В нем же написать пакет, который на основании raw-таблиц делает другие таблицы с версионностью SCD2. Также должна быть таблица с метаданными для вычисления инкремента с RAW-слоя (отбираются только те записи, у которых время обновления выше максимального времени обновления в целевой таблице на DDS-слое). Затем в CDM-слое строится финальная витрина (также с SCD2).
-Далее эти данные переливаются в Clickhouse, и затем используются в Superset для построения дашборда. 
-Все должно работать под управлением AirFlow (кроме Superset). Реализация выполнена на основе Docker-контейнеров (кроме генератора данных).
+## Requirements:
+I need to generate 3 tables (customer, product, sales) and pour them into PostgreSQL (RAW-layer). In it write a package that makes other tables with SCD2 versioning based on raw tables. There should also be a table with metadata for calculating increment from RAW-layer (only those records with update time higher than the maximum update time in the target table on DDS-layer are selected). A final datamart is then built in the CDM layer (also from SCD2).
+This data is then poured into Clickhouse, and then used in Superset to build the dashboard. 
+Everything should run under AirFlow (except Superset). The implementation is Docker container based (except for the data generator).
 
-## Используемые инструменты:
-- Python (генерация данных)
-- PostgreSQL (хранение данных)
-- Clickhouse (хранение финальной витрины)
-- Superset (визуализация)
-- AirFlow (оркестрация потоков)
+## Tools used:
+- Python (data generation)
+- PostgreSQL (data storage)
+- Clickhouse (storage of the final showcase)
+- Superset (visualisation)
+- AirFlow (flow orchestration)
 
-## Слои
-1. RAW (источники с SCD1)
-2. DDS (источники с SCD2)
-3. CDM (витрина с SCD2)
-4. SL (метаданные)
+## Layers:
+1. RAW (SCD1 sources)
+2. DDS (sources with SCD2)
+3. CDM (showcase with SCD2)
+4. SL (metadata)
 
-## Сущности:
+## Entities:
 
-**Клиент**
+**Customer**
 - ID
-- Имя
-- Фамилия
-- Дата рождения
-- Время обновления записи
+- First Name
+- Last Name
+- Date of birth
+- Record update time
 
-**Товар**
+**Product**
 - ID
-- Наименование
-- Категория
-- Размер
-- Цена
-- Время обновления записи
+- Name
+- Category
+- Size
+- Price
+- Record update time
 
-**Продажи**
+**Sales**
 - ID
-- Дата
-- Клиент
-- Товар
-- Количество
-- Время обновления записи
+- Date
+- Customer
+- Item
+- Quantity
+- Record update time
 
-**Витрина**:
-- Дата продажи
-- Клиент
-- Возраст клиента
-- Товар
-- Категория товара
-- Размер
-- Цена товара
-- Количество товара
-- Общая стоимость
+**Datamart**:
+- Date of sale
+- Customer
+- Customer Age
+- Product
+- Product category
+- Size
+- Product price
+- Quantity of goods
+- Total cost
 
 ## Dashboard
 
-Построенный дашборд должен показывать:
-- График выручки
-- Диаграмма выручки по категориям
-- Круговая диаграмма выручки по возрасту
-- Сумма выручки
-- Количество клиентов
-- Среднее количество товаров в чеке
-- Средняя сумма чека
-- Средний возраст клиентов
-- Самый популярный размер
+The constructed dashboard should show:
+- Revenue chart
+- Revenue chart by category
+- Pie chart of revenue by age
+- Amount of revenue
+- Number of customers
+- Average number of items per cheque
+- Average amount of cheque
+- Average age of customers
+- Most popular size
