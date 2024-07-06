@@ -16,6 +16,7 @@ Everything should run under AirFlow (except Superset). The implementation is Doc
 - Clickhouse (storage of the final showcase)
 - Superset (visualisation)
 - AirFlow (flow orchestration)
+- Docker (ensuring isolation)
 
 ## Layers:
 1. RAW (SCD1 sources)
