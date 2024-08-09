@@ -1,21 +1,24 @@
 # T-Shop
 ## Project Description:
-T-Shop is an online clothing shop from a parallel universe. It has 5 million customers, the number of which is constantly growing. Let's imagine that the daily conversion to purchase is 1% on weekdays and 5% on weekends. Several products in different quantities can be purchased as part of a purchase.
+T-Shop is an online clothing shop from a parallel universe. It has 5 million customers, the number of which is constantly growing.
 
 ## Project Objective:
-Build a simplified full-cycle ETL process (from raw data generation to visualisation).
+Build a simplified full-cycle process (from raw data generation to visualisation).
 
 ## Requirements:
-I need to generate 3 tables (customer, product, sales) and pour them into PostgreSQL (RAW-layer). In it write a package that makes other tables with SCD2 versioning based on raw tables. There should also be a table with metadata for calculating increment from RAW-layer (only those records with update time higher than the maximum update time in the target table on DDS-layer are selected). A final datamart is then built in the CDM layer (also from SCD2).
+Need to generate tables and pour them into PostgreSQL. In it write a package that makes other tables with SCD2 versioning based on raw tables. There should also be a table with metadata for calculating increment from RAW-layer (only those records with update time higher than the maximum update time in the target table on DDS-layer are selected). A final Data Mart is then built in the CDM layer (also from SCD2).
 This data is then poured into Clickhouse, and then used in Superset to build the dashboard. 
 Everything should run under AirFlow (except Superset). The implementation is Docker container based (except for the data generator).
 
 ## Tools used:
 - Python (data generation)
-- PostgreSQL (data storage)
-- Clickhouse (storage of the final showcase)
+- PostgreSQL (primary data storage)
+- Greenplum (data warehouse)
+- Clickhouse (storage of the final Data Mart)
 - Superset (visualisation)
 - AirFlow (flow orchestration)
+- Docker (ensuring isolation)
+- k3s / Docker Swarm (container orchestration)
 
 ## Layers:
 1. RAW (SCD1 sources)
@@ -48,7 +51,7 @@ Everything should run under AirFlow (except Superset). The implementation is Doc
 - Quantity
 - Record update time
 
-**Datamart**:
+**Data Mart**:
 - Date of sale
 - Customer
 - Customer Age
