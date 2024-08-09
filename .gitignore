@@ -59,5 +59,5 @@ env.bak/
 venv.bak/
 
 # Temp files
-generator/init/test.py
+test.py
 qodana.*

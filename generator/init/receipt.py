@@ -76,7 +76,7 @@ def get_ids(table):
     return result
 
 
-# Функция для генерации даты и времени с нормальным распределением
+# Function to generate date and time with normal distribution
 def generate_datetime(mean_time, std_dev, date):
     mean_datetime = datetime.combine(date, mean_time)
     seconds_from_mean = np.random.normal(loc=0, scale=std_dev * 60 * 60)
@@ -84,7 +84,7 @@ def generate_datetime(mean_time, std_dev, date):
     return generated_datetime
 
 
-# Функция для генерации данных с учетом покупок клиентов
+# Function for generating data based on customer purchases
 def generate_receipt(total_customers, p_purchase, start_date, end_date, mean_weekday_time, mean_weekend_time, std_dev,
                      customer_ids, product_ids, size_ids):
     current_date = start_date
@@ -93,10 +93,10 @@ def generate_receipt(total_customers, p_purchase, start_date, end_date, mean_wee
 
     while current_date < end_date:
         print('processing date:', current_date.strftime('%Y-%m-%d %H:%M:%S'))
-        if current_date.weekday() + 1 < 5:  # Будний день
+        if current_date.weekday() + 1 < 5:  # Weekday
             current_p_purchase = p_purchase * (random.randint(50, 150) / 100)
             mean_time = mean_weekday_time
-        else:  # Выходной день
+        else:  # Weekend
             current_p_purchase = p_purchase * (random.randint(150, 300) / 100)
             mean_time = mean_weekend_time
 
@@ -107,10 +107,10 @@ def generate_receipt(total_customers, p_purchase, start_date, end_date, mean_wee
             receipt_id = str(uuid4())
             receipt_dttm = generate_datetime(mean_time, std_dev, current_date)
 
-            # Генерация данных для продажи
+            # Generating data for sale
             receipts.append([receipt_id, customer_id, receipt_dttm])
 
-            # Генерация данных чековых позиций для текущей продажи
+            # Generate receipt item data for the current sale
             shape = 2.0
             scale = 0.55
             num_items = min(int(np.ceil(np.random.gamma(shape, scale))), 20)
@@ -166,15 +166,14 @@ def generate_and_insert_data(date_range, total_customers, p_purchase, mean_weekd
         print("Error:", error)
 
     finally:
-        # Закрытие соединения с базой данных
         if conn:
             cursor.close()
             conn.close()
 
 
-# Параметры моделирования
-total_customers = get_count('customer')  # Общее количество клиентов
-p_purchase = 0.01  # Вероятность покупки одним клиентом в день (примерная)
+# Simulation parameters
+total_customers = get_count('customer')  # Total number of clients
+p_purchase = 0.01  # Probability of purchase by one customer per day (approximate)
 
 try:
     conn = db_connection()
@@ -224,11 +223,11 @@ try:
     start_date = datetime(2024, 3, 25, 0, 0, 0)
     mean_weekday_time = datetime.strptime("20:00", "%H:%M").time()
     mean_weekend_time = datetime.strptime("15:00", "%H:%M").time()
-    std_dev = 2  # Стандартное отклонение в часах
+    std_dev = 2  # Standard deviation in hours
     days = 30 * 2
 
     date_ranges = [(start_date + timedelta(days=i), start_date + timedelta(days=i + 1)) for i in range(days)]
-    num_threads = 32  # Рекомендуется использовать больше потоков для задач I/O-bound
+    num_threads = 32  # It is recommended to use more threads for I/O-bound tasks
 
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = [
