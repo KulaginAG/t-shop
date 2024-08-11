@@ -12,7 +12,7 @@ register_adapter(np.int64, AsIs)
 register_adapter(np.float64, AsIs)
 load_dotenv()
 
-product = pd.read_csv('styles.csv', sep=',', on_bad_lines='skip')
+product = pd.read_csv('../../src/styles.csv', sep=',', on_bad_lines='skip')
 product = product[product['masterCategory'] == 'Apparel']
 product = product[['productDisplayName', 'articleType']]
 product.rename(columns={'productDisplayName': 'name',
@@ -52,7 +52,7 @@ try:
 
     get_product_query = '''
             SELECT name, category, price
-            FROM product
+            FROM app.product
             '''
 
     product_add = pd.read_sql(get_product_query, conn)
@@ -78,7 +78,7 @@ try:
     )
 
     cursor = conn.cursor()
-    insert_product_query = '''INSERT INTO product (name, category, price) VALUES %s;'''
+    insert_product_query = '''INSERT INTO app.product (name, category, price) VALUES %s;'''
     while max_id < max(product.index):
         max_id = max(product_add.index)
         product_new = product.iloc[max_id:max_id + 1]

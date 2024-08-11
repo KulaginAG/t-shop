@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 import os
 
 # Logging setup
-logging.basicConfig(filename='receipt.log', level=logging.INFO, format='[%(asctime)s] (%(levelname)s): %(message)s',
+logging.basicConfig(filename='receipt.log', level=logging.INFO, format='[%(asctime)s]: %(message)s',
                     force=True)
 
 register_adapter(np.int64, AsIs)
@@ -36,7 +36,7 @@ def db_connection():
 
 
 def get_count(conn, table):
-    query = f"SELECT MAX(id) FROM {table}"
+    query = f"SELECT MAX(id) FROM app.{table}"
     with conn.cursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchone()
@@ -44,7 +44,7 @@ def get_count(conn, table):
 
 
 def get_ids(conn, table):
-    query = f"SELECT id FROM {table}"
+    query = f"SELECT id FROM app.{table}"
     with conn.cursor() as cursor:
         cursor.execute(query)
         result = [row[0] for row in cursor.fetchall()]
@@ -112,8 +112,8 @@ def generate_receipt(customer_ids, product_ids, size_ids):
 def generate_and_insert_data(conn, customer_ids, product_ids, size_ids):
     try:
         with conn.cursor() as cursor:
-            receipts_insert_query = '''INSERT INTO receipt (id, customer_id, receipt_dttm) VALUES %s;'''
-            receipts_item_insert_query = '''INSERT INTO receipt_item (receipt_id, product_id, size_id, quantity) VALUES %s;'''
+            receipts_insert_query = '''INSERT INTO app.receipt (id, customer_id, receipt_dttm) VALUES %s;'''
+            receipts_item_insert_query = '''INSERT INTO app.receipt_item (receipt_id, product_id, size_id, quantity) VALUES %s;'''
             receipts, receipts_item = generate_receipt(customer_ids, product_ids, size_ids)
             psycopg2.extras.execute_values(cursor, receipts_insert_query, receipts.values.tolist())
             psycopg2.extras.execute_values(cursor, receipts_item_insert_query, receipts_item.values.tolist())
