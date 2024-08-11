@@ -28,7 +28,7 @@ try:
 
     get_product_query = '''
             SELECT id, price
-            FROM product
+            FROM app.product
             ORDER BY random()
             LIMIT 1
             '''
@@ -39,7 +39,7 @@ try:
         product_id, current_price = result[0], result[1]
         new_price = round(current_price * random.randint(80, 150) / 100, 2)
         update_product_query = f"""
-                                UPDATE product
+                                UPDATE app.product
                                 SET 
                                     price = {new_price},
                                     record_dttm = NOW()

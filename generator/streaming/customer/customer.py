@@ -29,7 +29,7 @@ try:
 
     cursor = conn.cursor()
 
-    insert_customer_query = '''INSERT INTO customer (first_name, last_name, birth_dt) VALUES %s;'''
+    insert_customer_query = '''INSERT INTO app.customer (first_name, last_name, birth_dt) VALUES %s;'''
 
     while True:
         customer = {

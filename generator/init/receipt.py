@@ -11,21 +11,28 @@ import keyring
 from time import sleep
 from dotenv import load_dotenv
 import os
+import sys
+from utils import Logs
 
 register_adapter(np.int64, AsIs)
 register_adapter(np.float64, AsIs)
 load_dotenv()
 
+cwd = os.path.dirname(os.path.realpath(__file__))
+logfile = Logs(cwd)
+logfile.set_config()
+
 
 def db_connection():
+    db_name = os.getenv("DB_NAME_PG")
     db_host = os.getenv("DB_HOST_PG")
     db_port = os.getenv("DB_PORT_PG")
     db_user = os.getenv("DB_USER_PG")
 
     return psycopg2.connect(
-        database='postgres',
+        database=db_name,
         user=db_user,
-        password=f"{keyring.get_password('PostgreSQL', db_user)}",
+        password=f"{keyring.get_password(db_name, db_user)}",
         host=db_host,
         port=db_port,
     )
@@ -34,7 +41,7 @@ def db_connection():
 def get_count(table):
     query = f"""
              SELECT MAX(id)
-             FROM {table}
+             FROM app.{table}
              """
 
     try:
@@ -44,7 +51,9 @@ def get_count(table):
         result = cursor.fetchone()
 
     except (Exception, psycopg2.Error) as error:
-        print("Error:", error)
+        logfile.show_action(f'Error: {error}')
+        logfile.add_separator()
+        sys.exit(1)
 
     finally:
         # Закрытие соединения с базой данных
@@ -58,7 +67,7 @@ def get_count(table):
 def get_ids(table):
     query = f"""
              SELECT id
-             FROM {table}
+             FROM app.{table}
              """
     try:
         conn = db_connection()
@@ -66,7 +75,9 @@ def get_ids(table):
         cursor.execute(query)
         result = [row[0] for row in cursor.fetchall()]
     except (Exception, psycopg2.Error) as error:
-        print("Error:", error)
+        logfile.show_action(f'Error: {error}')
+        logfile.add_separator()
+        sys.exit(1)
     finally:
         # Закрытие соединения с базой данных
         if conn:
@@ -92,7 +103,7 @@ def generate_receipt(total_customers, p_purchase, start_date, end_date, mean_wee
     receipts_item = []
 
     while current_date < end_date:
-        print('processing date:', current_date.strftime('%Y-%m-%d %H:%M:%S'))
+        logfile.show_action(f'Processing date: {current_date.strftime('%Y-%m-%d %H:%M:%S')}')
         if current_date.weekday() + 1 < 5:  # Weekday
             current_p_purchase = p_purchase * (random.randint(50, 150) / 100)
             mean_time = mean_weekday_time
@@ -136,8 +147,8 @@ def generate_and_insert_data(date_range, total_customers, p_purchase, mean_weekd
     conn = db_connection()
     try:
         cursor = conn.cursor()
-        receipts_insert_query = '''INSERT INTO receipt (id, customer_id, receipt_dttm) VALUES %s;'''
-        receipts_item_insert_query = '''INSERT INTO receipt_item (receipt_id, product_id, size_id, quantity) VALUES %s;'''
+        receipts_insert_query = '''INSERT INTO app.receipt (id, customer_id, receipt_dttm) VALUES %s;'''
+        receipts_item_insert_query = '''INSERT INTO app.receipt_item (receipt_id, product_id, size_id, quantity) VALUES %s;'''
         insert_queries = [receipts_insert_query, receipts_item_insert_query]
 
         receipts, receipts_item = generate_receipt(total_customers,
@@ -155,15 +166,18 @@ def generate_and_insert_data(date_range, total_customers, p_purchase, mean_weekd
                   'receipt_item': receipts_item
                   }
 
+        logfile.show_action(f'Inserting date: {start_date.strftime('%Y-%m-%d %H:%M:%S')}')
         for table, query in zip(tables.items(), insert_queries):
             records = table[1].values.tolist()
             psycopg2.extras.execute_values(cursor, query, records)
             conn.commit()
-            print(f'{table[0]}: {len(records)} rows inserted successfully into PostgreSQL\n')
+            logfile.show_action(f'{table[0]}: {len(records)} rows inserted successfully for date: {start_date.strftime('%Y-%m-%d %H:%M:%S')}')
             sleep(5)
 
     except (Exception, psycopg2.Error) as error:
-        print("Error:", error)
+        # Logging error information
+        logfile.show_action(f'An error occurred: {error}')
+        logfile.add_separator()
 
     finally:
         if conn:
@@ -172,34 +186,36 @@ def generate_and_insert_data(date_range, total_customers, p_purchase, mean_weekd
 
 
 # Simulation parameters
-total_customers = get_count('customer')  # Total number of clients
 p_purchase = 0.01  # Probability of purchase by one customer per day (approximate)
 
 try:
+    logfile.add_separator()
+    logfile.name('receipt init generator')
+    logfile.show_action('Connecting to database')
+
+    total_customers = get_count('customer')  # Total number of clients
+
     conn = db_connection()
     cursor = conn.cursor()
 
+    logfile.show_action('Getting ids')
     customer_ids = get_ids('customer')
     product_ids = get_ids('product')
     size_ids = get_ids('size')
 
     create_table_query = '''
-    DROP TABLE IF EXISTS public.receipt;
-    CREATE TABLE IF NOT EXISTS public.receipt
+    DROP TABLE IF EXISTS app.receipt;
+    CREATE TABLE IF NOT EXISTS app.receipt
     (
         id char(36) PRIMARY KEY,
         customer_id serial NOT NULL,
         receipt_dttm timestamp(3) NOT NULL,
         record_dttm timestamp(3) without time zone NOT NULL DEFAULT NOW(),
-        FOREIGN KEY (customer_id) REFERENCES customer(id)
-    )
+        FOREIGN KEY (customer_id) REFERENCES app.customer(id)
+    );
 
-    TABLESPACE pg_default;
-
-    ALTER TABLE IF EXISTS public.receipt OWNER to postgres;
-
-    DROP TABLE IF EXISTS public.receipt_item;
-    CREATE TABLE IF NOT EXISTS public.receipt_item
+    DROP TABLE IF EXISTS app.receipt_item;
+    CREATE TABLE IF NOT EXISTS app.receipt_item
     (
         id bigserial PRIMARY KEY,
         receipt_id char(36) NOT NULL,
@@ -207,28 +223,30 @@ try:
         size_id smallserial NOT NULL,
         quantity smallserial NOT NULL,
         record_dttm timestamp(3) without time zone NOT NULL DEFAULT NOW(),
-        FOREIGN KEY (receipt_id) REFERENCES receipt(id),
-        FOREIGN KEY (product_id) REFERENCES product(id),
-        FOREIGN KEY (size_id) REFERENCES size(id)
-    )
-
-    TABLESPACE pg_default;
-
-    ALTER TABLE IF EXISTS public.receipt_item OWNER to postgres;
+        FOREIGN KEY (receipt_id) REFERENCES app.receipt(id),
+        FOREIGN KEY (product_id) REFERENCES app.product(id),
+        FOREIGN KEY (size_id) REFERENCES app.size(id)
+    );
     '''
 
+    logfile.show_action('Creating table')
     cursor.execute(create_table_query)
     conn.commit()
 
+    logfile.show_action('Setting parameters')
+
     start_date = datetime(2024, 3, 25, 0, 0, 0)
+    end_date = datetime.now()
+    days = (end_date - start_date).days
+
     mean_weekday_time = datetime.strptime("20:00", "%H:%M").time()
     mean_weekend_time = datetime.strptime("15:00", "%H:%M").time()
     std_dev = 2  # Standard deviation in hours
-    days = 30 * 2
 
     date_ranges = [(start_date + timedelta(days=i), start_date + timedelta(days=i + 1)) for i in range(days)]
     num_threads = 32  # It is recommended to use more threads for I/O-bound tasks
 
+    logfile.show_action('Data generation has started')
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = [
             executor.submit(generate_and_insert_data, date_range, total_customers, p_purchase, mean_weekday_time,
@@ -238,11 +256,16 @@ try:
         for future in futures:
             future.result()
 
+    logfile.show_action('All rows inserted successfully into PostgreSQL')
+    logfile.show_action('Completed successfully')
+    logfile.add_separator()
+
 except (Exception, psycopg2.Error) as error:
-    print("Error inserting data into PostgreSQL:", error)
+    # Logging error information
+    logfile.show_action(f'An error occurred: {error}')
+    logfile.add_separator()
 
 finally:
     if conn:
         cursor.close()
         conn.close()
-        print("PostgreSQL connection is closed")

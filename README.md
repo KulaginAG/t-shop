@@ -1,6 +1,6 @@
 # T-Shop
 ## Project Description:
-T-Shop is an online clothing shop from a parallel universe. It has 5 million customers, the number of which is constantly growing.
+T-Shop is an online clothing store from a parallel universe. It has 500,000 customers, the number of which is constantly growing.
 
 ## Project Objective:
 Build a simplified full-cycle process (from raw data generation to visualisation).
@@ -26,41 +26,6 @@ Everything should run under AirFlow (except Superset). The implementation is Doc
 3. CDM (showcase with SCD2)
 4. SL (metadata)
 
-## Entities:
-
-**Customer**
-- ID
-- First Name
-- Last Name
-- Date of birth
-- Record update time
-
-**Product**
-- ID
-- Name
-- Category
-- Size
-- Price
-- Record update time
-
-**Sales**
-- ID
-- Date
-- Customer
-- Item
-- Quantity
-- Record update time
-
-**Data Mart**:
-- Date of sale
-- Customer
-- Customer Age
-- Product
-- Product category
-- Size
-- Product price
-- Quantity of goods
-- Total cost
 
 ## Dashboard
 

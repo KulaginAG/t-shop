@@ -24,7 +24,8 @@ class Logs:
         return logging.basicConfig(
             filename=self.log_file_path,
             format='%[%(asctime)s] (%(levelname)s): %(message)s',
-            level=logging.INFO
+            level=logging.INFO,
+            force=True,
         )
 
     def add_separator(self, cnt=150, sep='-'):
@@ -53,5 +54,8 @@ class Logs:
         """
         from datetime import datetime
 
+        action = f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {phrase}'
         with open(self.log_file_path, "a") as file:
-            file.write(f'[{datetime.now().strftime("%H:%M:%S")}] {phrase}')
+            file.write(f'{action}\n')
+
+        print(action)
